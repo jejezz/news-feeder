@@ -3,7 +3,7 @@ import 'package:news_feeder/models/news_source.dart';
 import 'package:news_feeder/services/rss_service.dart';
 
 Future<void> main() async {
-  final articles = await RssService().fetchAll(usEconomyNewsSources);
+  final articles = await RssService().fetchAll(economyNewsSources);
   print('Total articles: ${articles.length}');
   for (final a in articles.take(8)) {
     print('- [${a.sourceName}] ${a.title}');
