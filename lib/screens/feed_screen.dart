@@ -8,10 +8,18 @@ import '../services/translation_service.dart';
 import '../utils/relative_time.dart';
 
 class FeedScreen extends StatefulWidget {
-  const FeedScreen({super.key, this.fetchArticles, this.translate});
+  const FeedScreen({
+    super.key,
+    this.fetchArticles,
+    this.translate,
+    this.textScaleIndex = 1,
+    this.onTextScaleChanged,
+  });
 
   final Future<List<Article>> Function()? fetchArticles;
   final Translator? translate;
+  final int textScaleIndex;
+  final ValueChanged<int>? onTextScaleChanged;
 
   @override
   State<FeedScreen> createState() => _FeedScreenState();
@@ -19,7 +27,7 @@ class FeedScreen extends StatefulWidget {
 
 class _FeedScreenState extends State<FeedScreen> {
   late final Future<List<Article>> Function() _fetchArticles =
-      widget.fetchArticles ?? () => RssService().fetchAll(usEconomyNewsSources);
+      widget.fetchArticles ?? () => RssService().fetchAll(economyNewsSources);
   final _translationService = TranslationService();
   late final Translator _translate = widget.translate ?? _translationService.translate;
   late Future<List<Article>> _articlesFuture;
@@ -54,10 +62,22 @@ class _FeedScreenState extends State<FeedScreen> {
     return Scaffold(
       backgroundColor: colors.surface,
       appBar: AppBar(
-        title: const Text('미국 경제 뉴스'),
+        title: const Text('경제 뉴스'),
         elevation: 0,
         scrolledUnderElevation: 1,
         actions: [
+          if (widget.onTextScaleChanged case final onTextScaleChanged?)
+            PopupMenuButton<int>(
+              tooltip: '글자 크기',
+              icon: const Icon(Icons.format_size_rounded),
+              initialValue: widget.textScaleIndex,
+              onSelected: onTextScaleChanged,
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 0, child: Text('작게')),
+                PopupMenuItem(value: 1, child: Text('보통')),
+                PopupMenuItem(value: 2, child: Text('크게')),
+              ],
+            ),
           IconButton(
             onPressed: _refresh,
             icon: const Icon(Icons.refresh_rounded),
@@ -97,6 +117,37 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 }
 
+class _Thumbnail extends StatelessWidget {
+  const _Thumbnail({required this.imageUrl});
+
+  final String? imageUrl;
+
+  static const double _size = 84;
+
+  static const _placeholder = Image(
+    image: AssetImage('assets/icon/icon.png'),
+    width: _size,
+    height: _size,
+    fit: BoxFit.cover,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: imageUrl == null
+          ? _placeholder
+          : Image.network(
+              imageUrl!,
+              width: _size,
+              height: _size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => _placeholder,
+            ),
+    );
+  }
+}
+
 class _ArticleCard extends StatefulWidget {
   const _ArticleCard({
     required this.article,
@@ -116,8 +167,11 @@ class _ArticleCardState extends State<_ArticleCard> {
   late final Future<(String, String)> _translated = _translateArticle();
 
   Future<(String, String)> _translateArticle() async {
-    final title = widget.translate(widget.article.title);
-    final summary = widget.translate(widget.article.summary);
+    final article = widget.article;
+    if (article.isKorean) return (article.title, article.summary);
+
+    final title = widget.translate(article.title);
+    final summary = widget.translate(article.summary);
     return (await title, await summary);
   }
 
@@ -130,7 +184,7 @@ class _ArticleCardState extends State<_ArticleCard> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: colors.surfaceContainerLow,
+        color: colors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(18),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -140,19 +194,8 @@ class _ArticleCardState extends State<_ArticleCard> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (article.imageUrl != null) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      article.imageUrl!,
-                      width: 84,
-                      height: 84,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const SizedBox(width: 84, height: 84),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                ],
+                _Thumbnail(imageUrl: article.imageUrl),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

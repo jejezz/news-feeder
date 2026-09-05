@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:webfeed_revised/webfeed_revised.dart';
 
@@ -30,7 +32,11 @@ class RssService {
 
       if (response.statusCode != 200) return [];
 
-      final feed = RssFeed.parse(response.body);
+      // Many feeds omit a charset in Content-Type even though the body is
+      // UTF-8 (as declared in their XML prolog); response.body would then
+      // fall back to Latin-1 and mangle non-ASCII text, so decode explicitly.
+      final body = utf8.decode(response.bodyBytes, allowMalformed: true);
+      final feed = RssFeed.parse(body);
       return (feed.items ?? [])
           .where((item) => item.title != null && item.link != null)
           .map(
@@ -41,6 +47,7 @@ class RssService {
               sourceName: source.name,
               publishedAt: item.pubDate,
               imageUrl: _extractImageUrl(item),
+              isKorean: source.isKorean,
             ),
           )
           .toList();
