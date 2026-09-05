@@ -3,10 +3,15 @@ class NewsSource {
   final String feedUrl;
   final bool isKorean;
 
+  /// True for sources that mix in unverified or rumor-driven headlines,
+  /// so the UI can flag them with a caution marker.
+  final bool isUnverified;
+
   const NewsSource({
     required this.name,
     required this.feedUrl,
     this.isKorean = false,
+    this.isUnverified = false,
   });
 }
 
@@ -22,6 +27,10 @@ const List<NewsSource> economyNewsSources = [
   NewsSource(
     name: 'MarketWatch Top Stories',
     feedUrl: 'http://feeds.marketwatch.com/marketwatch/topstories/',
+  ),
+  NewsSource(
+    name: 'MarketWatch Breaking News',
+    feedUrl: 'http://feeds.marketwatch.com/marketwatch/bulletins/',
   ),
   NewsSource(
     name: 'Investing.com Economy',
@@ -51,6 +60,11 @@ const List<NewsSource> economyNewsSources = [
   NewsSource(
     name: '한국경제 경제',
     feedUrl: 'https://www.hankyung.com/feed/economy',
+    isKorean: true,
+  ),
+  NewsSource(
+    name: '한국경제 증권',
+    feedUrl: 'https://www.hankyung.com/feed/finance',
     isKorean: true,
   ),
   NewsSource(

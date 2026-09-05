@@ -30,12 +30,16 @@ class _FeedScreenState extends State<FeedScreen> {
       widget.fetchArticles ?? () => RssService().fetchAll(economyNewsSources);
   final _translationService = TranslationService();
   late final Translator _translate = widget.translate ?? _translationService.translate;
-  late Future<List<Article>> _articlesFuture;
+  final _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
+
+  // null while the very first load is in flight; kept populated with the
+  // previous results during a refresh so the list doesn't flash empty.
+  List<Article>? _articles;
 
   @override
   void initState() {
     super.initState();
-    _articlesFuture = _fetchArticles();
+    _load();
   }
 
   @override
@@ -44,11 +48,13 @@ class _FeedScreenState extends State<FeedScreen> {
     super.dispose();
   }
 
-  Future<void> _refresh() async {
-    final future = _fetchArticles();
-    setState(() => _articlesFuture = future);
-    await future;
+  Future<void> _load() async {
+    final articles = await _fetchArticles();
+    if (!mounted) return;
+    setState(() => _articles = articles);
   }
+
+  Future<void> _refresh() => _load();
 
   Future<void> _openArticle(String url) async {
     final uri = Uri.parse(url);
@@ -79,27 +85,27 @@ class _FeedScreenState extends State<FeedScreen> {
               ],
             ),
           IconButton(
-            onPressed: _refresh,
+            onPressed: () => _refreshIndicatorKey.currentState?.show(),
             icon: const Icon(Icons.refresh_rounded),
             tooltip: '새로고침',
           ),
         ],
       ),
       body: RefreshIndicator(
+        key: _refreshIndicatorKey,
         onRefresh: _refresh,
-        child: FutureBuilder<List<Article>>(
-          future: _articlesFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
+        child: Builder(
+          builder: (context) {
+            final articles = _articles;
+            if (articles == null) {
               return const _LoadingState();
             }
-
-            final articles = snapshot.data ?? [];
             if (articles.isEmpty) {
               return _EmptyState(onRetry: _refresh);
             }
 
             return ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
               itemCount: articles.length,
               itemBuilder: (context, index) {
@@ -290,22 +296,46 @@ class _ArticleCardState extends State<_ArticleCard> {
                       Row(
                         children: [
                           Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colors.secondaryContainer,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                article.sourceName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: colors.onSecondaryContainer,
-                                  fontWeight: FontWeight.w600,
+                            child: Tooltip(
+                              message: article.isUnverified
+                                  ? '검증되지 않은 루머성 정보가 포함될 수 있어요'
+                                  : '',
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: article.isUnverified
+                                      ? Colors.amber.withValues(alpha: 0.2)
+                                      : colors.secondaryContainer,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (article.isUnverified) ...[
+                                      const Icon(
+                                        Icons.warning_amber_rounded,
+                                        size: 12,
+                                        color: Colors.amber,
+                                      ),
+                                      const SizedBox(width: 3),
+                                    ],
+                                    Flexible(
+                                      child: Text(
+                                        article.sourceName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.labelSmall?.copyWith(
+                                          color: article.isUnverified
+                                              ? Colors.amber.shade100
+                                              : colors.onSecondaryContainer,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),

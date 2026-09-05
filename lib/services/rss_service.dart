@@ -48,6 +48,7 @@ class RssService {
               publishedAt: item.pubDate,
               imageUrl: _extractImageUrl(item),
               isKorean: source.isKorean,
+              isUnverified: source.isUnverified,
             ),
           )
           .toList();

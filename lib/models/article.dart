@@ -6,6 +6,7 @@ class Article {
   final DateTime? publishedAt;
   final String? imageUrl;
   final bool isKorean;
+  final bool isUnverified;
 
   const Article({
     required this.title,
@@ -15,5 +16,6 @@ class Article {
     required this.publishedAt,
     this.imageUrl,
     this.isKorean = false,
+    this.isUnverified = false,
   });
 }
