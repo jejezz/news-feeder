@@ -30,7 +30,7 @@ class _MyAppState extends State<MyApp> {
     );
 
     return MaterialApp(
-      title: 'News Feeder',
+      title: 'EconoBrief',
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: 'ClipartKorea',
