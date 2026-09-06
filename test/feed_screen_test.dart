@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:news_feeder/models/article.dart';
-import 'package:news_feeder/screens/feed_screen.dart';
+import 'package:news_feeder/screens/feed_screen.dart' show NewsFeedView;
 
 void main() {
   testWidgets('renders fetched articles with title, summary and source', (
@@ -19,7 +19,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: FeedScreen(
+        home: NewsFeedView(
           fetchArticles: () async => articles,
           translate: (text) async => '[번역] $text',
         ),
@@ -43,7 +43,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(home: FeedScreen(fetchArticles: () async => [])),
+      MaterialApp(home: NewsFeedView(fetchArticles: () async => [])),
     );
     await tester.pumpAndSettle();
 

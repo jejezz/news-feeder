@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/feed_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -56,7 +56,7 @@ class _MyAppState extends State<MyApp> {
           child: child!,
         );
       },
-      home: FeedScreen(
+      home: HomeScreen(
         textScaleIndex: _textScaleIndex,
         onTextScaleChanged: _setTextScaleIndex,
       ),
