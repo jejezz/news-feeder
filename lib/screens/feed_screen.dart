@@ -110,6 +110,7 @@ class _FeedScreenState extends State<FeedScreen> {
               itemCount: articles.length,
               itemBuilder: (context, index) {
                 return _ArticleCard(
+                  key: ValueKey(articles[index].link),
                   article: articles[index],
                   translate: _translate,
                   onTap: () => _openArticle(articles[index].link),
@@ -156,6 +157,7 @@ class _Thumbnail extends StatelessWidget {
 
 class _ArticleCard extends StatefulWidget {
   const _ArticleCard({
+    super.key,
     required this.article,
     required this.translate,
     required this.onTap,
