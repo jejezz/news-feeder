@@ -83,3 +83,31 @@ const List<NewsSource> economyNewsSources = [
     isKorean: true,
   ),
 ];
+
+const List<NewsSource> itNewsSources = [
+  NewsSource(name: 'TechCrunch', feedUrl: 'https://techcrunch.com/feed/'),
+  NewsSource(
+    name: 'Ars Technica',
+    feedUrl: 'https://feeds.arstechnica.com/arstechnica/index',
+  ),
+  NewsSource(name: 'Wired', feedUrl: 'https://www.wired.com/feed/rss'),
+  NewsSource(
+    name: 'Engadget',
+    feedUrl: 'https://www.engadget.com/rss.xml',
+  ),
+  NewsSource(
+    name: '한국경제 IT',
+    feedUrl: 'https://www.hankyung.com/feed/it',
+    isKorean: true,
+  ),
+  NewsSource(
+    name: '전자신문',
+    feedUrl: 'https://rss.etnews.com/Section901.xml',
+    isKorean: true,
+  ),
+  NewsSource(
+    name: '블로터',
+    feedUrl: 'https://www.bloter.net/rss/allArticle.xml',
+    isKorean: true,
+  ),
+];

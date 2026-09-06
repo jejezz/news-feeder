@@ -7,27 +7,31 @@ import '../services/rss_service.dart';
 import '../services/translation_service.dart';
 import '../utils/relative_time.dart';
 
-class FeedScreen extends StatefulWidget {
-  const FeedScreen({
+/// Displays a pull-to-refresh list of articles fetched from [sources].
+///
+/// Embedded as one tab's content by [HomeScreen]; has no [Scaffold] or
+/// [AppBar] of its own so it can live inside a [TabBarView].
+class NewsFeedView extends StatefulWidget {
+  const NewsFeedView({
     super.key,
+    this.sources = const [],
     this.fetchArticles,
     this.translate,
-    this.textScaleIndex = 1,
-    this.onTextScaleChanged,
+    this.loadingLabel = '최신 뉴스를 불러오는 중...',
   });
 
+  final List<NewsSource> sources;
   final Future<List<Article>> Function()? fetchArticles;
   final Translator? translate;
-  final int textScaleIndex;
-  final ValueChanged<int>? onTextScaleChanged;
+  final String loadingLabel;
 
   @override
-  State<FeedScreen> createState() => _FeedScreenState();
+  State<NewsFeedView> createState() => NewsFeedViewState();
 }
 
-class _FeedScreenState extends State<FeedScreen> {
+class NewsFeedViewState extends State<NewsFeedView> {
   late final Future<List<Article>> Function() _fetchArticles =
-      widget.fetchArticles ?? () => RssService().fetchAll(economyNewsSources);
+      widget.fetchArticles ?? () => RssService().fetchAll(widget.sources);
   final _translationService = TranslationService();
   late final Translator _translate = widget.translate ?? _translationService.translate;
   final _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
@@ -56,6 +60,11 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Future<void> _refresh() => _load();
 
+  /// Triggers the same visible refresh animation as a pull gesture.
+  void triggerRefresh() {
+    _refreshIndicatorKey.currentState?.show();
+  }
+
   Future<void> _openArticle(String url) async {
     final uri = Uri.parse(url);
     await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -63,62 +72,33 @@ class _FeedScreenState extends State<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    return RefreshIndicator(
+      key: _refreshIndicatorKey,
+      onRefresh: _refresh,
+      child: Builder(
+        builder: (context) {
+          final articles = _articles;
+          if (articles == null) {
+            return _LoadingState(label: widget.loadingLabel);
+          }
+          if (articles.isEmpty) {
+            return _EmptyState(onRetry: _refresh);
+          }
 
-    return Scaffold(
-      backgroundColor: colors.surface,
-      appBar: AppBar(
-        title: const Text('경제 뉴스'),
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        actions: [
-          if (widget.onTextScaleChanged case final onTextScaleChanged?)
-            PopupMenuButton<int>(
-              tooltip: '글자 크기',
-              icon: const Icon(Icons.format_size_rounded),
-              initialValue: widget.textScaleIndex,
-              onSelected: onTextScaleChanged,
-              itemBuilder: (context) => const [
-                PopupMenuItem(value: 0, child: Text('작게')),
-                PopupMenuItem(value: 1, child: Text('보통')),
-                PopupMenuItem(value: 2, child: Text('크게')),
-              ],
-            ),
-          IconButton(
-            onPressed: () => _refreshIndicatorKey.currentState?.show(),
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: '새로고침',
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        key: _refreshIndicatorKey,
-        onRefresh: _refresh,
-        child: Builder(
-          builder: (context) {
-            final articles = _articles;
-            if (articles == null) {
-              return const _LoadingState();
-            }
-            if (articles.isEmpty) {
-              return _EmptyState(onRetry: _refresh);
-            }
-
-            return ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-              itemCount: articles.length,
-              itemBuilder: (context, index) {
-                return _ArticleCard(
-                  key: ValueKey(articles[index].link),
-                  article: articles[index],
-                  translate: _translate,
-                  onTap: () => _openArticle(articles[index].link),
-                );
-              },
-            );
-          },
-        ),
+          return ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+            itemCount: articles.length,
+            itemBuilder: (context, index) {
+              return _ArticleCard(
+                key: ValueKey(articles[index].link),
+                article: articles[index],
+                translate: _translate,
+                onTap: () => _openArticle(articles[index].link),
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -370,17 +350,19 @@ class _ArticleCardState extends State<_ArticleCard> {
 }
 
 class _LoadingState extends StatelessWidget {
-  const _LoadingState();
+  const _LoadingState({required this.label});
+
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text('최신 경제 뉴스를 불러오는 중...'),
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          Text(label),
         ],
       ),
     );
