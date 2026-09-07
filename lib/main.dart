@@ -33,13 +33,13 @@ class _MyAppState extends State<MyApp> {
       title: 'EconoBrief',
       theme: ThemeData(
         useMaterial3: true,
-        fontFamily: 'ClipartKorea',
+        fontFamily: 'SeoulNamsan',
         colorScheme: colorScheme,
         scaffoldBackgroundColor: const Color(0xFF12141B),
         appBarTheme: AppBarTheme(
           backgroundColor: const Color(0xFF12141B),
           titleTextStyle: TextStyle(
-            fontFamily: 'ClipartKorea',
+            fontFamily: 'SeoulNamsan',
             fontWeight: FontWeight.w700,
             fontSize: 20,
             letterSpacing: -0.2,
